@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
 
 contract NisERC20 {
     // General info about token
@@ -12,9 +10,11 @@ contract NisERC20 {
 
     // Mint authority
     address private _minter;
+    uint256 private _changeColorCostFee;
 
     uint256 private _total_supply;
     mapping(address => uint256) private _balances;
+    mapping(address => uint32) private _favouriteColors;
     mapping(address => mapping(address => uint256)) private _allowaces;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -26,6 +26,7 @@ contract NisERC20 {
         _decimals = decimals_;
         // Set the address of mint authority(im kinda freak, because i grabbed it from solana))
         _minter = msg.sender;
+        _changeColorCostFee = 0;
     }
 
     function name() public view returns (string memory) {
@@ -44,8 +45,12 @@ contract NisERC20 {
         return _minter;
     }
 
-    function balanceOf(address owner) public view returns (uint256) {
+    function balanceOf(address owner) public view returns (uint256 amount) {
         return _balances[owner];
+    }
+
+    function balanceOfWithColor(address owner) public view returns (uint32 color, uint256 amount ) {
+        return (_favouriteColors[owner], _balances[owner]);
     }
 
     function totalSupply() public view returns (uint256) {
@@ -60,8 +65,11 @@ contract NisERC20 {
 
     function mint(address to, uint256 amount) public returns (bool success) {
         require(msg.sender == _minter, "Only minter can mint");
+        
         _balances[to] += amount;
         _total_supply += amount;
+        _favouriteColors[to] = 0;
+
         return true;
     }
 
@@ -85,9 +93,7 @@ contract NisERC20 {
 
     function transferFrom(address from, address to, uint256 value) public returns (bool success) {
         require(_allowaces[from][msg.sender] >= value, "Insufficent allowance balance");
-        require(_balances[from] >= value, "Insufficent balance");
 
-        _balances[from] -= value;
         _balances[to] += value;
         _allowaces[from][msg.sender] -= value;
 
@@ -96,11 +102,36 @@ contract NisERC20 {
 
     function approve(address spender, uint256 value) public returns (bool success) {
         require(_balances[msg.sender] >= value, "Insufficent balance");
+        _balances[msg.sender] -= value;
         _allowaces[msg.sender][spender] += value;
+        return true;
+    }
+
+    function revertApprove(address spender, uint256 value) public returns (bool success) {
+        require(_allowaces[msg.sender][spender] >= value, "Insufficient allowance");
+        _allowaces[msg.sender][spender] -= value;
+        _balances[msg.sender] += value;
         return true;
     }
 
     function allowance(address owner, address spender) public view returns (uint256 remaining) {
         return _allowaces[owner][spender];
+    }
+
+    function setColorChangingFee(uint256 fee) public returns (bool status) {
+        require(msg.sender == _minter, "Only minter can set color changing fee");
+        _changeColorCostFee = fee;
+
+        return true;
+    }
+
+    function setFavouriteColor(uint32 color) public returns(bool status) {
+        require(_balances[msg.sender] >= _changeColorCostFee, "Not enogh tokens to change the favourite token color");
+        require(color <= 0xffffff, "Incorrect color format");
+        burn(_changeColorCostFee);
+
+        _favouriteColors[msg.sender] = color;
+
+        return true;
     }
 }

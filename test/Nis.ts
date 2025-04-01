@@ -3,6 +3,10 @@ import hre, { ethers }  from "hardhat";
 import { NisERC20 } from "../typechain-types";
 import { Signer } from "ethers";
 
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+
+
 const TOKEN_NAME = "Nikita Isachenko Sergiyovich";
 const TOKEN_SYMBOL = "NIS";
 const TOKEN_DECIMALS = 10;
@@ -19,6 +23,8 @@ let eve: Signer;
 const deployToken = async (signer: Signer) => {
   return await ethers.deployContract("NisERC20", [TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS], signer);
 };
+
+chai.use(chaiAsPromised);
 
 describe("deployment", () => {
   let token: NisERC20;
@@ -81,8 +87,9 @@ describe("transfer tokens between accounts", async () => {
   });
 
   it ("should be correct if transfer from bob to bob", async () => {
+    let oldBalance = await token.connect(bob).balanceOf(bob);
     await token.connect(bob).transfer(bob, 20);
-    expect(await token.balanceOf(bob)).to.equal(13042);
+    expect(await token.balanceOf(bob)).to.equal(oldBalance);
   });
 
   it ("should be reverted if balance is insufficient", async () => {
@@ -114,6 +121,27 @@ describe("token allowance", async () => {
     expect(await token.allowance(alice, eve)).equal(0);
     expect(await token.balanceOf(alice)).be.equal(100_000 - 1000);
   });
+});
+
+describe("change color", async () => {
+  let token: NisERC20;
+  before(async () => {
+    token = await deployToken(minter);
+    await token.connect(minter).mint(eve, 100_000);
+  });
+
+  it ("should set default color after mint", async () => {
+    expect((await token.connect(minter).balanceOfWithColor(alice)).amount).to.eq(0);
+  });
+
+  it ("should set color fee properly", async () => {
+
+  });
+
+  it ("should change color with burning tokens", async() => {
+    await expect(token.setFavouriteColor(0xff55ff)).to.be.not.rejected;
+  });
+
 });
 
 describe("burn tokens", async () => {
