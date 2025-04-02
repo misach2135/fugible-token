@@ -4,6 +4,5 @@ Assignment:
 
 1. [x] Implement basic fugible token functionality
 2. [x] Add specific functionality to smart contract
-3. [ ] Faucet for written token
-4. [ ] Write contract for exchange IPT_Coin for written token
-5. [ ] Solve additional tasks
+5. [x] Write contract for exchange IPT_Coin for written token
+6. [ ] Solve additional tasks
