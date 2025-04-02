@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import "./IERC20.sol";
 
-contract NisERC20 {
+contract NisERC20 is IERC20 {
     // General info about token
     string private _name;
     string private _symbol;
@@ -16,9 +17,6 @@ contract NisERC20 {
     mapping(address => uint256) private _balances;
     mapping(address => uint32) private _favouriteColors;
     mapping(address => mapping(address => uint256)) private _allowaces;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_) {
         _name = name_;
@@ -49,7 +47,9 @@ contract NisERC20 {
         return _balances[owner];
     }
 
-    function balanceOfWithColor(address owner) public view returns (uint32 color, uint256 amount ) {
+    function balanceOfWithColor(
+        address owner
+    ) public view returns (uint32 color, uint256 amount) {
         return (_favouriteColors[owner], _balances[owner]);
     }
 
@@ -65,7 +65,7 @@ contract NisERC20 {
 
     function mint(address to, uint256 amount) public returns (bool success) {
         require(msg.sender == _minter, "Only minter can mint");
-        
+
         _balances[to] += amount;
         _total_supply += amount;
         _favouriteColors[to] = 0;
@@ -74,13 +74,19 @@ contract NisERC20 {
     }
 
     function burn(uint256 amount) public returns (bool success) {
-        require(_balances[msg.sender] >= amount, "Trying to burn more than youv have.");
+        require(
+            _balances[msg.sender] >= amount,
+            "Trying to burn more than youv have."
+        );
         _balances[msg.sender] -= amount;
         _total_supply -= amount;
         return true;
     }
 
-    function transfer(address to, uint256 amount) public returns (bool success) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public returns (bool success) {
         require(_balances[msg.sender] >= amount, "Insufficent balance");
 
         _balances[msg.sender] -= amount;
@@ -91,42 +97,72 @@ contract NisERC20 {
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) public returns (bool success) {
-        require(_allowaces[from][msg.sender] >= value, "Insufficent allowance balance");
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public returns (bool success) {
+        require(
+            _allowaces[from][msg.sender] >= value,
+            "Insufficent allowance balance"
+        );
 
         _balances[to] += value;
         _allowaces[from][msg.sender] -= value;
 
+        emit Transfer(from, to, value);
+
         return true;
     }
 
-    function approve(address spender, uint256 value) public returns (bool success) {
+    function approve(
+        address spender,
+        uint256 value
+    ) public returns (bool success) {
         require(_balances[msg.sender] >= value, "Insufficent balance");
         _balances[msg.sender] -= value;
         _allowaces[msg.sender][spender] += value;
+
+        emit Approval(msg.sender, spender, value);
+
         return true;
     }
 
-    function revertApprove(address spender, uint256 value) public returns (bool success) {
-        require(_allowaces[msg.sender][spender] >= value, "Insufficient allowance");
+    function revertApprove(
+        address spender,
+        uint256 value
+    ) public returns (bool success) {
+        require(
+            _allowaces[msg.sender][spender] >= value,
+            "Insufficient allowance"
+        );
         _allowaces[msg.sender][spender] -= value;
         _balances[msg.sender] += value;
         return true;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256 remaining) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view returns (uint256 remaining) {
         return _allowaces[owner][spender];
     }
 
     function setColorChangingFee(uint256 fee) public returns (bool status) {
-        require(msg.sender == _minter, "Only minter can set color changing fee");
+        require(
+            msg.sender == _minter,
+            "Only minter can set color changing fee"
+        );
         _changeColorCostFee = fee;
 
         return true;
     }
 
-    function setFavouriteColor(uint32 color) public returns(bool status) {
-        require(_balances[msg.sender] >= _changeColorCostFee, "Not enogh tokens to change the favourite token color");
+    function setFavouriteColor(uint32 color) public returns (bool status) {
+        require(
+            _balances[msg.sender] >= _changeColorCostFee,
+            "Not enogh tokens to change the favourite token color"
+        );
         require(color <= 0xffffff, "Incorrect color format");
         burn(_changeColorCostFee);
 

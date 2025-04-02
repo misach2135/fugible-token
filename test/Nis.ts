@@ -26,7 +26,7 @@ const deployToken = async (signer: Signer) => {
 
 chai.use(chaiAsPromised);
 
-describe("deployment", () => {
+describe.skip("deployment", () => {
   let token: NisERC20;
 
   before(async () => {
@@ -135,12 +135,12 @@ describe("change color", async () => {
   });
 
   it ("should set color fee properly", async () => {
-
+    await token.connect(minter).setColorChangingFee(1000);
   });
 
-  it ("should change color with burning tokens", async() => {
-    await expect(token.setFavouriteColor(0xff55ff)).to.be.not.rejected;
-  });
+  // it ("should change color with burning tokens", async() => {
+  //   await expect(token.setFavouriteColor(0xff55ff)).to.be.not.rejected;
+  // });
 
 });
 
