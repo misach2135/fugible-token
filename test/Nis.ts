@@ -26,7 +26,7 @@ const deployToken = async (signer: Signer) => {
 
 chai.use(chaiAsPromised);
 
-describe.skip("deployment", () => {
+describe("deployment", () => {
   let token: NisERC20;
 
   before(async () => {

@@ -27,15 +27,15 @@ contract NisERC20 is IERC20 {
         _changeColorCostFee = 0;
     }
 
-    function name() public view returns (string memory) {
+    function name() external view returns (string memory) {
         return _name;
     }
 
-    function symbol() public view returns (string memory) {
+    function symbol() external view returns (string memory) {
         return _symbol;
     }
 
-    function decimals() public view returns (uint8) {
+    function decimals() external view returns (uint8) {
         return _decimals;
     }
 
@@ -43,7 +43,7 @@ contract NisERC20 is IERC20 {
         return _minter;
     }
 
-    function balanceOf(address owner) public view returns (uint256 amount) {
+    function balanceOf(address owner) external view returns (uint256 amount) {
         return _balances[owner];
     }
 
@@ -53,7 +53,7 @@ contract NisERC20 is IERC20 {
         return (_favouriteColors[owner], _balances[owner]);
     }
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _total_supply;
     }
 
@@ -86,7 +86,7 @@ contract NisERC20 is IERC20 {
     function transfer(
         address to,
         uint256 amount
-    ) public returns (bool success) {
+    ) external returns (bool success) {
         require(_balances[msg.sender] >= amount, "Insufficent balance");
 
         _balances[msg.sender] -= amount;
@@ -101,14 +101,19 @@ contract NisERC20 is IERC20 {
         address from,
         address to,
         uint256 value
-    ) public returns (bool success) {
+    ) external returns (bool success) {
         require(
             _allowaces[from][msg.sender] >= value,
             "Insufficent allowance balance"
         );
+        require(
+            _balances[from] >= value,
+            "Insufficent balance"
+        );
 
         _balances[to] += value;
         _allowaces[from][msg.sender] -= value;
+        _balances[from] -= value;
 
         emit Transfer(from, to, value);
 
@@ -118,9 +123,9 @@ contract NisERC20 is IERC20 {
     function approve(
         address spender,
         uint256 value
-    ) public returns (bool success) {
+    ) external returns (bool success) {
         require(_balances[msg.sender] >= value, "Insufficent balance");
-        _balances[msg.sender] -= value;
+
         _allowaces[msg.sender][spender] += value;
 
         emit Approval(msg.sender, spender, value);
@@ -128,23 +133,10 @@ contract NisERC20 is IERC20 {
         return true;
     }
 
-    function revertApprove(
-        address spender,
-        uint256 value
-    ) public returns (bool success) {
-        require(
-            _allowaces[msg.sender][spender] >= value,
-            "Insufficient allowance"
-        );
-        _allowaces[msg.sender][spender] -= value;
-        _balances[msg.sender] += value;
-        return true;
-    }
-
     function allowance(
         address owner,
         address spender
-    ) public view returns (uint256 remaining) {
+    ) external view returns (uint256 remaining) {
         return _allowaces[owner][spender];
     }
 
